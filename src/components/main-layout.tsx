@@ -3,10 +3,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Wallet, PieChart, FileText, PanelLeft, Bot } from 'lucide-react';
+import { Home, Wallet, PieChart, FileText, PanelLeft, Bot, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useAuth } from '@/hooks/use-auth';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: Home },
@@ -16,37 +17,66 @@ const navItems = [
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user, signOut, loading } = useAuth();
+
+  if (loading) {
+    return (
+        <div className="flex items-center justify-center min-h-screen">
+            <div className="text-2xl font-semibold">Loading...</div>
+        </div>
+    )
+  }
+
+  if (!user) {
+    // This should be handled by the useAuth hook redirecting, but as a fallback
+    return null;
+  }
 
   const navContent = (
-    <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
-      <Link
-        href="/"
-        className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
-      >
-        <Bot className="h-5 w-5 transition-all group-hover:scale-110" />
-        <span className="sr-only">BudgetFlow</span>
-      </Link>
-      <TooltipProvider>
-        {navItems.map((item) => (
-          <Tooltip key={item.href}>
-            <TooltipTrigger asChild>
-              <Link
-                href={item.href}
-                className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors md:h-8 md:w-8 ${
-                  pathname === item.href
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <item.icon className="h-5 w-5" />
-                <span className="sr-only">{item.label}</span>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="right">{item.label}</TooltipContent>
-          </Tooltip>
-        ))}
-      </TooltipProvider>
-    </nav>
+    <div className="flex flex-col h-full">
+      <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
+        <Link
+          href="/"
+          className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
+        >
+          <Bot className="h-5 w-5 transition-all group-hover:scale-110" />
+          <span className="sr-only">BudgetFlow</span>
+        </Link>
+        <TooltipProvider>
+          {navItems.map((item) => (
+            <Tooltip key={item.href}>
+              <TooltipTrigger asChild>
+                <Link
+                  href={item.href}
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors md:h-8 md:w-8 ${
+                    pathname === item.href
+                      ? 'bg-accent text-accent-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span className="sr-only">{item.label}</span>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">{item.label}</TooltipContent>
+            </Tooltip>
+          ))}
+        </TooltipProvider>
+      </nav>
+      <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={signOut} className="h-9 w-9 text-muted-foreground hover:text-foreground">
+                        <LogOut className="h-5 w-5" />
+                        <span className="sr-only">Logout</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">Logout</TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+      </nav>
+    </div>
   );
 
   return (
@@ -84,6 +114,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     {item.label}
                   </Link>
                 ))}
+                <button onClick={signOut} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                    <LogOut className="h-5 w-5" />
+                    Logout
+                </button>
               </nav>
             </SheetContent>
           </Sheet>
