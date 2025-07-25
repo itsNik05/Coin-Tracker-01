@@ -16,6 +16,7 @@ import type { Transaction } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import { useRouter } from "next/navigation";
 
 const ReportView = ({ transactions }: { transactions: Transaction[] }) => {
     const totalIncome = transactions
@@ -67,7 +68,8 @@ const ReportView = ({ transactions }: { transactions: Transaction[] }) => {
 export default function ReportsPage() {
     const { transactions } = useAppState();
     const { toast } = useToast();
-    const { user, signInWithGoogle } = useAuth();
+    const { user } = useAuth();
+    const router = useRouter();
     const [date, setDate] = React.useState<DateRange | undefined>();
     const [reportTxs, setReportTxs] = React.useState<Transaction[] | null>(null);
 
@@ -111,8 +113,7 @@ export default function ReportsPage() {
     const handleDownload = (period: 'weekly' | 'monthly') => {
         if (!user) {
             toast({ title: 'Authentication Required', description: 'Please sign in to download reports.', variant: 'destructive' });
-            // Optionally, trigger sign-in flow
-            // signInWithGoogle();
+            router.push('/login');
             return;
         }
 

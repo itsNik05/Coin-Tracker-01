@@ -2,11 +2,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
-import { Chrome, LogIn } from "lucide-react";
+import { Chrome } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-// Corrected import for the Microsoft icon SVG
 const MicrosoftIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
       <path fill="#F25022" d="M1 1h10v10H1z"/>
