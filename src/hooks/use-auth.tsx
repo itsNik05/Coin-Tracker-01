@@ -28,22 +28,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (loading) return;
-
-    const isAuthPage = pathname === '/login';
-
-    if (!user && !isAuthPage) {
-      router.push('/login');
-    } else if (user && isAuthPage) {
-      router.push('/');
-    }
-  }, [user, loading, pathname, router]);
-
-
   const signOut = async () => {
     await firebaseSignOut();
-    router.push('/login');
+    // No longer force redirect to login
   };
   
   const value = { user, loading, signInWithGoogle, signInWithMicrosoft, signOut };

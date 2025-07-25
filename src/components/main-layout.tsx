@@ -2,8 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Home, Wallet, PieChart, FileText, PanelLeft, Bot, LogOut } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Home, Wallet, PieChart, FileText, PanelLeft, Bot, LogOut, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -17,6 +17,7 @@ const navItems = [
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, signOut, loading } = useAuth();
 
   if (loading) {
@@ -25,11 +26,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <div className="text-2xl font-semibold">Loading...</div>
         </div>
     )
-  }
-
-  if (!user) {
-    // This should be handled by the useAuth hook redirecting, but as a fallback
-    return null;
   }
 
   const navContent = (
@@ -65,15 +61,27 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       </nav>
       <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
         <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={signOut} className="h-9 w-9 text-muted-foreground hover:text-foreground">
-                        <LogOut className="h-5 w-5" />
-                        <span className="sr-only">Logout</span>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right">Logout</TooltipContent>
-            </Tooltip>
+            {user ? (
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={signOut} className="h-9 w-9 text-muted-foreground hover:text-foreground">
+                            <LogOut className="h-5 w-5" />
+                            <span className="sr-only">Logout</span>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">Logout</TooltipContent>
+                </Tooltip>
+            ) : (
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                         <Button variant="ghost" size="icon" onClick={() => router.push('/login')} className="h-9 w-9 text-muted-foreground hover:text-foreground">
+                            <LogIn className="h-5 w-5" />
+                            <span className="sr-only">Login</span>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">Login</TooltipContent>
+                </Tooltip>
+            )}
         </TooltipProvider>
       </nav>
     </div>
@@ -114,10 +122,17 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     {item.label}
                   </Link>
                 ))}
-                <button onClick={signOut} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
-                    <LogOut className="h-5 w-5" />
-                    Logout
-                </button>
+                {user ? (
+                    <button onClick={signOut} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                        <LogOut className="h-5 w-5" />
+                        Logout
+                    </button>
+                ) : (
+                    <Link href="/login" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                        <LogIn className="h-5 w-5" />
+                        Login
+                    </Link>
+                )}
               </nav>
             </SheetContent>
           </Sheet>

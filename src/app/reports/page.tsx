@@ -9,10 +9,13 @@ import { Calendar as CalendarIcon, Download, Share2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, subDays, subMonths } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { useToast } from "@/hooks/use-toast";
 import type { Transaction } from "@/lib/types";
+import { useAuth } from "@/hooks/use-auth";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 const ReportView = ({ transactions }: { transactions: Transaction[] }) => {
     const totalIncome = transactions
@@ -64,8 +67,71 @@ const ReportView = ({ transactions }: { transactions: Transaction[] }) => {
 export default function ReportsPage() {
     const { transactions } = useAppState();
     const { toast } = useToast();
+    const { user, signInWithGoogle } = useAuth();
     const [date, setDate] = React.useState<DateRange | undefined>();
     const [reportTxs, setReportTxs] = React.useState<Transaction[] | null>(null);
+
+    const generatePDF = (txs: Transaction[], title: string) => {
+        const doc = new jsPDF();
+        
+        const totalIncome = txs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+        const totalExpense = txs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+        const netFlow = totalIncome - totalExpense;
+
+        doc.setFontSize(20);
+        doc.text(title, 14, 22);
+        doc.setFontSize(12);
+        doc.text(`Total Income: $${totalIncome.toFixed(2)}`, 14, 32);
+        doc.text(`Total Expenses: $${totalExpense.toFixed(2)}`, 14, 38);
+        doc.text(`Net Flow: $${netFlow.toFixed(2)}`, 14, 44);
+
+        const tableColumn = ["Date", "Description", "Category", "Type", "Amount"];
+        const tableRows: (string | number)[][] = [];
+
+        txs.forEach(tx => {
+            const txData = [
+                format(tx.date, "yyyy-MM-dd"),
+                tx.description,
+                tx.category,
+                tx.type,
+                `$${tx.amount.toFixed(2)}`
+            ];
+            tableRows.push(txData);
+        });
+
+        (doc as any).autoTable({
+            startY: 50,
+            head: [tableColumn],
+            body: tableRows,
+        });
+
+        doc.save(`${title.toLowerCase().replace(/ /g, '_')}.pdf`);
+    }
+
+    const handleDownload = (period: 'weekly' | 'monthly') => {
+        if (!user) {
+            toast({ title: 'Authentication Required', description: 'Please sign in to download reports.', variant: 'destructive' });
+            // Optionally, trigger sign-in flow
+            // signInWithGoogle();
+            return;
+        }
+
+        const to = new Date();
+        const from = period === 'weekly' ? subDays(to, 7) : subMonths(to, 1);
+        
+        const filteredTxs = transactions.filter(tx => {
+            const txDate = new Date(tx.date);
+            return txDate >= from && txDate <= to;
+        });
+        
+        if (filteredTxs.length === 0) {
+            toast({ title: 'No Data', description: `No transactions found for the last ${period === 'weekly' ? '7 days' : 'month'}.`});
+            return;
+        }
+
+        generatePDF(filteredTxs, `${period === 'weekly' ? 'Weekly' : 'Monthly'} Transaction Report`);
+    }
+
 
     const generateReport = () => {
         if (!date?.from || !date?.to) {
@@ -82,10 +148,6 @@ export default function ReportsPage() {
     const handleShare = () => {
         toast({ title: 'Link Copied!', description: 'A shareable link to your report has been copied to your clipboard.' });
     };
-    
-    const handleDownload = () => {
-        toast({ title: 'Downloading Report...', description: 'Your report is being generated and will download shortly.' });
-    }
 
     return (
         <MainLayout>
@@ -97,7 +159,7 @@ export default function ReportsPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Generate a Report</CardTitle>
-                        <CardDescription>Select a date range to generate a spending report.</CardDescription>
+                        <CardDescription>Select a date range to generate a spending report, or download a quick report.</CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col md:flex-row items-center gap-4">
                         <Popover>
@@ -134,6 +196,16 @@ export default function ReportsPage() {
                             </PopoverContent>
                         </Popover>
                         <Button onClick={generateReport}>Generate Report</Button>
+                        <div className="flex gap-2">
+                             <Button onClick={() => handleDownload('weekly')} variant="outline">
+                                <Download className="mr-2 h-4 w-4" />
+                                Weekly PDF
+                            </Button>
+                            <Button onClick={() => handleDownload('monthly')} variant="outline">
+                                <Download className="mr-2 h-4 w-4" />
+                                Monthly PDF
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
                 
@@ -149,9 +221,6 @@ export default function ReportsPage() {
                             <div className="flex gap-2">
                                 <Button variant="outline" size="icon" onClick={handleShare}>
                                     <Share2 className="h-4 w-4" />
-                                </Button>
-                                <Button variant="outline" size="icon" onClick={handleDownload}>
-                                    <Download className="h-4 w-4" />
                                 </Button>
                             </div>
                         </CardHeader>

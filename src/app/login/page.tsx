@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { Chrome, LogIn } from "lucide-react";
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 // Corrected import for the Microsoft icon SVG
 const MicrosoftIcon = () => (
@@ -15,7 +17,14 @@ const MicrosoftIcon = () => (
 );
 
 export default function LoginPage() {
-  const { signInWithGoogle, signInWithMicrosoft } = useAuth();
+  const { user, signInWithGoogle, signInWithMicrosoft } = useAuth();
+  const router = useRouter();
+  
+  useEffect(() => {
+    if (user) {
+      router.push('/');
+    }
+  }, [user, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
