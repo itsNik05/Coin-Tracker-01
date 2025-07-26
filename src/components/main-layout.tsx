@@ -94,9 +94,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               {authSection}
             </SheetContent>
           </Sheet>
-          <div className="font-headline text-xl font-semibold">
-            {navItems.find(item => item.href === pathname)?.label || 'Dashboard'}
-          </div>
         </header>
         <main className="flex-1 p-4 sm:px-6 sm:py-0">{children}</main>
       </div>
