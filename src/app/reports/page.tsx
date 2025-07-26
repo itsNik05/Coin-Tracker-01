@@ -18,12 +18,12 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from 'react';
-import { doc, getFirestore, getDoc } from 'firebase/firestore'; // Import Firestore functions
-import { app } from "@/lib/firebase"; // Import firebase app
+import { doc, getFirestore, getDoc } from 'firebase/firestore'; 
+import { app } from "@/lib/firebase"; 
 
-const db = getFirestore(app); // Get Firestore instance
+const db = getFirestore(app); 
 
-const ReportView = ({ transactions, userName, reportPeriod }: { transactions: Transaction[], userName: string | null, reportPeriod: string }) => {
+const ReportView = ({ transactions }: { transactions: Transaction[] }) => {
     const totalIncome = transactions
         .filter(t => t.type === 'income')
         .reduce((acc, t) => acc + t.amount, 0);
@@ -41,9 +41,6 @@ const ReportView = ({ transactions, userName, reportPeriod }: { transactions: Tr
 
     return (
         <div className="space-y-4">
-            {userName && reportPeriod && (
-                <p className="text-lg font-semibold">Report for {userName} ({reportPeriod})</p>
-            )}
             <Card>
                 <CardHeader>
                     <CardTitle>Summary</CardTitle>
@@ -85,13 +82,17 @@ export default function ReportsPage() {
     useEffect(() => {
         const fetchUserName = async () => {
             if (user) {
-                const userDocRef = doc(db, "users", user.uid);
-                const userDocSnap = await getDoc(userDocRef);
-                if (userDocSnap.exists()) {
-                    const userData = userDocSnap.data();
-                    setUserName(`${userData.firstName} ${userData.lastName || ''}`.trim());
-                } else {
-                    setUserName(user.email); // Use email if user data not in Firestore
+                try {
+                    const userDocRef = doc(db, "users", user.uid);
+                    const userDocSnap = await getDoc(userDocRef);
+                    if (userDocSnap.exists()) {
+                        const userData = userDocSnap.data();
+                        setUserName(`${userData.firstName} ${userData.lastName || ''}`.trim());
+                    } else {
+                        setUserName(user.displayName || user.email);
+                    }
+                } catch (error) {
+                    setUserName(user.displayName || user.email); // Fallback on error
                 }
             } else {
                 setUserName(null);
@@ -99,9 +100,9 @@ export default function ReportsPage() {
         };
 
         fetchUserName();
-    }, [user]); // Refetch name if user changes
+    }, [user]);
 
-    const generatePDF = (txs: Transaction[], title: string) => {
+    const generatePDF = (txs: Transaction[], title: string, period: string) => {
         const doc = new jsPDF();
         
         const totalIncome = txs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
@@ -110,24 +111,22 @@ export default function ReportsPage() {
 
         doc.setFontSize(20);
         doc.text(title, 14, 22);
-        // Add user name and report period to PDF
-        if (userName && date?.from && date?.to) {
-            doc.setFontSize(12);
-            doc.text(`For: ${userName}`, 14, 28);
-            doc.text(`Period: ${format(date.from, "MMM d, yyyy")} - ${format(date.to, "MMM d, yyyy")}`, 14, 34);
-        }
+        
+        doc.setFontSize(12);
+        doc.text(`For: ${userName || 'User'}`, 14, 32);
+        doc.text(`Period: ${period}`, 14, 38);
 
         doc.setFontSize(12);
-        doc.text(`Total Income: $${totalIncome.toFixed(2)}`, 14, userName && date?.from && date?.to ? 44 : 32);
-        doc.text(`Total Expenses: $${totalExpense.toFixed(2)}`, 14, userName && date?.from && date?.to ? 50 : 38);
-        doc.text(`Net Flow: $${netFlow.toFixed(2)}`, 14, userName && date?.from && date?.to ? 56 : 44);
+        doc.text(`Total Income: $${totalIncome.toFixed(2)}`, 14, 50);
+        doc.text(`Total Expenses: $${totalExpense.toFixed(2)}`, 14, 56);
+        doc.text(`Net Flow: $${netFlow.toFixed(2)}`, 14, 62);
 
         const tableColumn = ["Date", "Description", "Category", "Type", "Amount"];
         const tableRows: (string | number)[][] = [];
 
         txs.forEach(tx => {
             const txData = [
-                format(tx.date, "yyyy-MM-dd"),
+                format(new Date(tx.date), "yyyy-MM-dd"),
                 tx.description,
                 tx.category,
                 tx.type,
@@ -137,7 +136,7 @@ export default function ReportsPage() {
         });
 
         (doc as any).autoTable({
-            startY: userName && date?.from && date?.to ? 62 : 50,
+            startY: 70,
             head: [tableColumn],
             body: tableRows,
         });
@@ -145,7 +144,7 @@ export default function ReportsPage() {
         doc.save(`${title.toLowerCase().replace(/ /g, '_')}.pdf`);
     }
 
-    const handleDownload = (period: 'weekly' | 'monthly') => {
+    const handleDownload = (periodType: 'weekly' | 'monthly') => {
         if (!user) {
             toast({ title: 'Authentication Required', description: 'Please sign in to download reports.', variant: 'destructive' });
             router.push('/login');
@@ -153,7 +152,7 @@ export default function ReportsPage() {
         }
 
         const to = new Date();
-        const from = period === 'weekly' ? subDays(to, 7) : subMonths(to, 1);
+        const from = periodType === 'weekly' ? subDays(to, 7) : subMonths(to, 1);
         
         const filteredTxs = transactions.filter(tx => {
             const txDate = new Date(tx.date);
@@ -161,13 +160,13 @@ export default function ReportsPage() {
         });
         
         if (filteredTxs.length === 0) {
-            toast({ title: 'No Data', description: `No transactions found for the last ${period === 'weekly' ? '7 days' : 'month'}.`});
+            toast({ title: 'No Data', description: `No transactions found for the last ${periodType === 'weekly' ? '7 days' : 'month'}.`});
             return;
         }
 
-        generatePDF(filteredTxs, `${period === 'weekly' ? 'Weekly' : 'Monthly'} Transaction Report`);
+        const periodText = `${format(from, "MMM d, yyyy")} - ${format(to, "MMM d, yyyy")}`;
+        generatePDF(filteredTxs, `${periodType === 'weekly' ? 'Weekly' : 'Monthly'} Transaction Report`, periodText);
     }
-
 
     const generateReport = () => {
         if (!date?.from || !date?.to) {
@@ -260,10 +259,14 @@ export default function ReportsPage() {
                                 <Button variant="outline" size="icon" onClick={handleShare}>
                                     <Share2 className="h-4 w-4" />
                                 </Button>
+                                 <Button onClick={() => generatePDF(reportTxs, "Custom Period Report", reportPeriodText)} variant="outline">
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Download PDF
+                                </Button>
                             </div>
                         </CardHeader>
                         <CardContent>
-                            {reportTxs.length > 0 ? <ReportView transactions={reportTxs} userName={userName} reportPeriod={reportPeriodText} /> : <p className="text-muted-foreground">No transactions in this period.</p>}
+                            {reportTxs.length > 0 ? <ReportView transactions={reportTxs} /> : <p className="text-muted-foreground">No transactions in this period.</p>}
                         </CardContent>
                     </Card>
                 )}
