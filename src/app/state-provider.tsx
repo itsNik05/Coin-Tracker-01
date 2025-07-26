@@ -5,82 +5,82 @@ import React, { createContext, useContext, useState, useMemo, useEffect } from '
 import { type Transaction, type Budget, type Category } from '@/lib/types';
 import { categories as defaultCategories } from '@/lib/data';
 import { categorizeTransaction as categorizeTransactionFlow } from '@/ai/flows/categorize-transaction';
+import { useAuth } from '@/hooks/use-auth';
+import { addTransactionToDb, getTransactions, deleteTransactionFromDb, updateTransactionInDb, getBudgets, updateBudgetInDb } from '@/lib/firestore';
 
 interface AppState {
   transactions: Transaction[];
   budgets: Budget[];
   categories: Category[];
   loading: boolean;
-  addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => void;
-  updateBudget: (budget: Omit<Budget, 'id'>) => void;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => Promise<void>;
+  updateBudget: (budget: Omit<Budget, 'id'>) => Promise<void>;
   getCategoryByName: (name: string) => Category | undefined;
   categorizeTransaction: (description: string) => Promise<string | null>;
-  deleteTransaction: (id: string) => void;
-  updateTransaction: (transaction: Transaction) => void;
+  deleteTransaction: (id: string) => Promise<void>;
+  updateTransaction: (transaction: Transaction) => Promise<void>;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
 
-// Helper function to get data from sessionStorage
-const getFromSession = <T,>(key: string, defaultValue: T): T => {
-  if (typeof window !== 'undefined') {
-    const storedValue = sessionStorage.getItem(key);
-    if (storedValue) {
-      return JSON.parse(storedValue, (key, value) => {
-        // Reviver to convert date strings back to Date objects
-        if (key === 'date' && typeof value === 'string') {
-          return new Date(value);
-        }
-        return value;
-      });
-    }
-  }
-  return defaultValue;
-};
-
-// Helper function to set data in sessionStorage
-const setInSession = <T,>(key: string, value: T) => {
-  if (typeof window !== 'undefined') {
-    sessionStorage.setItem(key, JSON.stringify(value));
-  }
-};
-
-
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [transactions, setTransactions] = useState<Transaction[]>(() => getFromSession('transactions', []));
-  const [budgets, setBudgets] = useState<Budget[]>(() => getFromSession('budgets', []));
-  const [loading] = useState(false); // No async loading for session storage
+  const { user } = useAuth();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setInSession('transactions', transactions);
-  }, [transactions]);
-
-  useEffect(() => {
-    setInSession('budgets', budgets);
-  }, [budgets]);
+    const loadData = async () => {
+      if (user) {
+        setLoading(true);
+        try {
+          const [userTransactions, userBudgets] = await Promise.all([
+            getTransactions(user.uid),
+            getBudgets(user.uid)
+          ]);
+          setTransactions(userTransactions);
+          setBudgets(userBudgets);
+        } catch (error) {
+          console.error("Failed to load user data:", error);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        // Not logged in, clear data
+        setTransactions([]);
+        setBudgets([]);
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [user]);
 
 
   const getCategoryByName = (name: string): Category | undefined => {
     return defaultCategories.find(c => c.name.toLowerCase() === name.toLowerCase());
   };
 
-  const addTransaction = (transaction: Omit<Transaction, 'id' | 'date'>) => {
-    const newTransaction = {
+  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'date'>) => {
+    if (!user) throw new Error("User not authenticated");
+    
+    const newTransactionData = {
       ...transaction,
-      id: new Date().toISOString(), // Simple unique ID
       date: new Date(),
     };
-    const newTransactions = [newTransaction, ...transactions].sort((a,b) => b.date.getTime() - a.date.getTime());
-    setTransactions(newTransactions);
+
+    const newTransaction = await addTransactionToDb(user.uid, newTransactionData);
+    setTransactions(prev => [newTransaction, ...prev].sort((a,b) => b.date.getTime() - a.date.getTime()));
   };
   
-  const updateBudget = (budget: Omit<Budget, 'id'>) => {
+  const updateBudget = async (budget: Omit<Budget, 'id'>) => {
+    if (!user) throw new Error("User not authenticated");
+    const updatedBudget = await updateBudgetInDb(user.uid, budget);
     setBudgets(prev => {
-        const existing = prev.find(b => b.category === budget.category);
+        const existing = prev.find(b => b.category === updatedBudget.category);
         if (existing) {
-            return prev.map(b => b.category === budget.category ? { ...b, amount: budget.amount } : b);
+            return prev.map(b => b.category === updatedBudget.category ? { ...b, amount: updatedBudget.amount } : b);
         }
-        return [...prev, { ...budget, id: new Date().toISOString() }];
+        return [...prev, updatedBudget];
     });
   };
 
@@ -98,11 +98,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const deleteTransaction = (id: string) => {
+  const deleteTransaction = async (id: string) => {
+    if (!user) throw new Error("User not authenticated");
+    await deleteTransactionFromDb(id);
     setTransactions(prev => prev.filter(transaction => transaction.id !== id));
   };
 
-  const updateTransaction = (updatedTransaction: Transaction) => {
+  const updateTransaction = async (updatedTransaction: Transaction) => {
+    if (!user) throw new Error("User not authenticated");
+    await updateTransactionInDb(updatedTransaction);
     setTransactions(prev => 
       prev.map(transaction => 
         transaction.id === updatedTransaction.id ? updatedTransaction : transaction
@@ -122,7 +126,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     categorizeTransaction,
     deleteTransaction,
     updateTransaction,
-  }), [transactions, budgets, loading]);
+  }), [transactions, budgets, loading, user]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

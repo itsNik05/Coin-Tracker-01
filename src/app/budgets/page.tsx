@@ -18,15 +18,19 @@ const EditBudgetDialog = ({ category, currentAmount }: { category: string, curre
     const { updateBudget } = useAppState();
     const [amount, setAmount] = useState(currentAmount);
     const [open, setOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
+        setIsSubmitting(true);
         try {
-            updateBudget({ category, amount });
+            await updateBudget({ category, amount });
             toast({ title: 'Budget Updated', description: `Budget for ${category} set to $${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.` });
             setOpen(false);
         } catch (error) {
              toast({ title: 'Error', description: 'Failed to update budget.', variant: 'destructive' });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -44,7 +48,8 @@ const EditBudgetDialog = ({ category, currentAmount }: { category: string, curre
                     <Input id="amount" type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} />
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleSubmit}>
+                    <Button onClick={handleSubmit} disabled={isSubmitting}>
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Save Changes
                     </Button>
                 </DialogFooter>
@@ -58,23 +63,27 @@ const NewBudgetDialog = () => {
     const [category, setCategory] = useState('');
     const [amount, setAmount] = useState(0);
     const [open, setOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
 
     const availableCategories = categories.filter(c => c.name !== 'Income' && !budgets.find(b => b.category === c.name));
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!category || amount <= 0) {
             toast({ title: 'Invalid Input', description: 'Please select a category and enter a valid amount.', variant: 'destructive' });
             return;
         }
+        setIsSubmitting(true);
         try {
-            updateBudget({ category, amount });
+            await updateBudget({ category, amount });
             toast({ title: 'Budget Created', description: `Budget for ${category} set to $${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.` });
             setCategory('');
             setAmount(0);
             setOpen(false);
         } catch(error) {
             toast({ title: 'Error', description: 'Failed to create budget.', variant: 'destructive' });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -90,7 +99,7 @@ const NewBudgetDialog = () => {
                 <div className="grid gap-4 py-4">
                     <div>
                         <Label htmlFor="category">Category</Label>
-                        <Select onValueChange={setCategory}>
+                        <Select onValueChange={setCategory} value={category}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a category" />
                             </SelectTrigger>
@@ -105,7 +114,8 @@ const NewBudgetDialog = () => {
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleSubmit}>
+                    <Button onClick={handleSubmit} disabled={isSubmitting}>
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Create Budget
                     </Button>
                 </DialogFooter>
@@ -202,7 +212,7 @@ export default function BudgetsPage() {
                         )
                     })}
                 </div>
-                {budgets.length === 0 && (
+                {budgets.length === 0 && !loading && (
                     <div className="text-center py-10 border-2 border-dashed rounded-lg">
                         <p className="text-muted-foreground">You haven't set any budgets yet.</p>
                         <p className="text-muted-foreground">Click "Set New Budget" to get started.</p>

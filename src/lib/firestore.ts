@@ -11,7 +11,8 @@ import {
     deleteDoc, 
     doc,
     updateDoc,
-    writeBatch
+    writeBatch,
+    Timestamp
 } from 'firebase/firestore';
 import { Transaction, Budget } from './types';
 
@@ -28,25 +29,28 @@ export const getTransactions = async (userId: string): Promise<Transaction[]> =>
             id: doc.id, 
             ...data,
             // Convert Firestore Timestamp to JS Date
-            date: data.date.toDate(),
+            date: (data.date as Timestamp).toDate(),
         } as Transaction);
     });
     // Sort by date descending
     return transactions.sort((a, b) => b.date.getTime() - a.date.getTime());
 };
 
-export const addTransaction = async (userId: string, transaction: Omit<Transaction, 'id'>) => {
+export const addTransactionToDb = async (userId: string, transaction: Omit<Transaction, 'id'>): Promise<Transaction> => {
     const docRef = await addDoc(collection(db, "transactions"), { 
         ...transaction,
         userId,
     });
-    return docRef.id;
+    return {
+        id: docRef.id,
+        ...transaction
+    };
 };
 
 export const updateTransactionInDb = async (transaction: Transaction) => {
     const { id, ...data } = transaction;
     const transactionRef = doc(db, "transactions", id);
-    await updateDoc(transactionRef, data);
+    await updateDoc(transactionRef, { ...data });
 };
 
 export const deleteTransactionFromDb = async (transactionId: string) => {
@@ -65,7 +69,7 @@ export const getBudgets = async (userId: string): Promise<Budget[]> => {
     return budgets;
 };
 
-export const updateBudgetInDb = async (userId: string, budget: Omit<Budget, 'id'>) => {
+export const updateBudgetInDb = async (userId: string, budget: Omit<Budget, 'id'>): Promise<Budget> => {
     const budgetsRef = collection(db, "budgets");
     const q = query(budgetsRef, where("userId", "==", userId), where("category", "==", budget.category));
     
@@ -80,6 +84,7 @@ export const updateBudgetInDb = async (userId: string, budget: Omit<Budget, 'id'
         const docId = querySnapshot.docs[0].id;
         const budgetRef = doc(db, "budgets", docId);
         await updateDoc(budgetRef, { amount: budget.amount });
-        return { id: docId, ...budget };
+        const { id, ...rest } = budget;
+        return { id: docId, ...rest };
     }
 };

@@ -4,19 +4,22 @@ import { useAppState } from "@/app/state-provider";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
+import { useState } from "react";
 
 export default function RecentTransactions() {
   const { transactions, getCategoryByName, deleteTransaction, loading } = useAppState();
   const { toast } = useToast();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const recentTransactions = transactions.slice(0, 5);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
     try {
-      deleteTransaction(id);
+      await deleteTransaction(id);
       toast({
         title: "Success",
         description: "Transaction deleted successfully.",
@@ -27,6 +30,8 @@ export default function RecentTransactions() {
         description: "Failed to delete transaction.",
         variant: "destructive",
       });
+    } finally {
+        setDeletingId(null);
     }
   };
 
@@ -34,15 +39,12 @@ export default function RecentTransactions() {
     return (
         <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center justify-between">
+                <div key={i} className="flex items-center justify-between p-4 border-b">
                     <div className="flex items-center gap-4">
-                        <Skeleton className="h-10 w-10 rounded-full" />
-                        <div className="space-y-1">
-                            <Skeleton className="h-4 w-32" />
-                            <Skeleton className="h-3 w-20" />
-                        </div>
+                        <Skeleton className="h-8 w-24" />
+                        <Skeleton className="h-8 w-16" />
                     </div>
-                    <Skeleton className="h-6 w-16" />
+                    <Skeleton className="h-8 w-12" />
                 </div>
             ))}
         </div>
@@ -85,8 +87,13 @@ export default function RecentTransactions() {
               </TableCell>
               <TableCell>
                 <div className="flex gap-2 justify-end">
-                  <Button variant="destructive" size="icon" onClick={() => handleDelete(t.id)}>
-                    <Trash2 className="h-4 w-4" />
+                  <Button 
+                    variant="destructive" 
+                    size="icon" 
+                    onClick={() => handleDelete(t.id)}
+                    disabled={deletingId === t.id}
+                  >
+                    {deletingId === t.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                   </Button>
                 </div>
               </TableCell>
