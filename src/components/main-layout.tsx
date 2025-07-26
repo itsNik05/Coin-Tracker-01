@@ -3,11 +3,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Wallet, PieChart, FileText, PanelLeft, Bot, LogOut, LogIn } from 'lucide-react';
+import { Home, Wallet, PieChart, FileText, PanelLeft, Bot, LogOut, LogIn, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/use-auth';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: Home },
@@ -122,6 +123,24 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     {item.label}
                   </Link>
                 ))}
+
+                {/* Added Collapsible Menu for Statements */}
+                <Collapsible>
+                  <CollapsibleTrigger className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                    <FileText className="h-5 w-5" />
+                    Statements
+                    <ChevronDown className="ml-auto h-4 w-4" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="grid gap-2 pl-8">
+                    <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                      Weekly Statement
+                    </Link>
+                    <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                      Monthly Statement
+                    </Link>
+                  </CollapsibleContent>
+                </Collapsible>
+
                 {user ? (
                     <button onClick={signOut} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
                         <LogOut className="h-5 w-5" />
