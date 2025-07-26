@@ -31,11 +31,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       if (user) {
         setUser(user);
-        // Prefer displayName if it exists (e.g., from Google Sign-In)
+        
+        // Use displayName from Auth profile first, as it's updated on sign-up/Google sign-in
         if (user.displayName) {
           setUserName(user.displayName);
         } else {
-          // Fallback to fetching from Firestore for email/password users
+          // As a fallback, try to get from Firestore. This might be for older accounts.
           try {
             const userDocRef = doc(db, "users", user.uid);
             const userDocSnap = await getDoc(userDocRef);
@@ -43,13 +44,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               const userData = userDocSnap.data();
               setUserName(`${userData.firstName} ${userData.lastName || ''}`.trim());
             } else {
-              // If no doc, use email as a last resort
-              setUserName(user.email);
+              setUserName(user.email); // Final fallback
             }
           } catch (error) {
-            console.error("Failed to get document, using email as fallback:", error);
-            // If firestore fails (e.g. offline), use email
-            setUserName(user.email);
+            console.error("Firestore fetch failed, using email as fallback:", error);
+            setUserName(user.email); // Fallback on error
           }
         }
       } else {
@@ -61,12 +60,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const signOut = async () => {
+
+  const handleSignOut = async () => {
     await firebaseSignOut();
     router.push('/login');
   };
   
-  const value = { user, userName, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut };
+  const value = { 
+    user, 
+    userName, 
+    loading, 
+    signInWithGoogle, 
+    signInWithEmail, 
+    signUpWithEmail, 
+    signOut: handleSignOut 
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -37,6 +37,7 @@ export default function LoginPage() {
       } else {
         await signInWithEmail(email, password);
       }
+      router.push('/'); // Redirect on successful sign-in/up
     } catch (err: any) {
       setError(err.message);
     }
@@ -52,29 +53,31 @@ export default function LoginPage() {
         <CardContent className="grid gap-4">
           <form onSubmit={handleSubmit} className="grid gap-4">
             {isSignUp && (
-              <div className="grid gap-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  type="text"
-                  placeholder="First Name"
-                  required // Make first name compulsory
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                />
-              </div>
-            )}
-             {isSignUp && (
-              <div className="grid gap-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  type="text"
-                  placeholder="Last Name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                />
-              </div>
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input
+                        id="firstName"
+                        type="text"
+                        placeholder="First Name"
+                        required
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input
+                        id="lastName"
+                        type="text"
+                        placeholder="Last Name"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        />
+                    </div>
+                </div>
+              </>
             )}
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
@@ -97,7 +100,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {error && <p className="text-destructive text-sm">{error}</p>}
             <Button type="submit" className="w-full">
               {isSignUp ? 'Sign Up' : 'Sign In'}
             </Button>
@@ -112,7 +115,7 @@ export default function LoginPage() {
               </span>
             </div>
           </div>
-           <Button onClick={signInWithGoogle} variant="outline">
+           <Button onClick={signInWithGoogle} variant="outline" className="w-full">
             <Chrome className="mr-2 h-5 w-5" />
             Sign in with Google
           </Button>

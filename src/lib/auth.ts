@@ -1,3 +1,4 @@
+'use client';
 import { app } from './firebase';
 import {
   getAuth,
@@ -6,6 +7,7 @@ import {
   createUserWithEmailAndPassword, // Import for email/password sign-up
   signInWithEmailAndPassword,   // Import for email/password sign-in
   signOut as firebaseSignOut,
+  updateProfile,
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc } from 'firebase/firestore'; // Import Firestore functions
 
@@ -19,6 +21,7 @@ export const signInWithGoogle = async () => {
     await signInWithPopup(auth, googleProvider);
   } catch (error) {
     console.error('Error signing in with Google:', error);
+    throw error;
   }
 };
 
@@ -35,6 +38,11 @@ export const signUpWithEmail = async (email: string, password: string, firstName
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
+
+    // Also update the Firebase Auth profile
+    await updateProfile(user, {
+        displayName: `${firstName} ${lastName || ''}`.trim()
+    });
 
     // Save user information to Firestore
     await setDoc(doc(db, "users", user.uid), {
