@@ -85,15 +85,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       date: new Date(),
     };
 
+    const newTransaction = {
+        ...transactionWithDate,
+        id: new Date().toISOString() // Temporary ID, will be replaced by Firestore
+    };
+    
     const newDocId = await addTransactionToDb(user.uid, transactionWithDate);
     
-    const newTransaction: Transaction = {
-      ...transactionWithDate,
-      id: newDocId,
-    };
-
     setTransactions(prev => 
-      [...prev, newTransaction].sort((a, b) => b.date.getTime() - a.date.getTime())
+      [{ ...newTransaction, id: newDocId }, ...prev].sort((a, b) => b.date.getTime() - a.date.getTime())
     );
   };
   
