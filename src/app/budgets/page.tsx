@@ -19,18 +19,14 @@ const EditBudgetDialog = ({ category, currentAmount }: { category: string, curre
     const [amount, setAmount] = useState(currentAmount);
     const [open, setOpen] = useState(false);
     const { toast } = useToast();
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = async () => {
-        setIsSubmitting(true);
+    const handleSubmit = () => {
         try {
-            await updateBudget({ category, amount });
+            updateBudget({ category, amount });
             toast({ title: 'Budget Updated', description: `Budget for ${category} set to $${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.` });
             setOpen(false);
         } catch (error) {
              toast({ title: 'Error', description: 'Failed to update budget.', variant: 'destructive' });
-        } finally {
-            setIsSubmitting(false);
         }
     };
 
@@ -48,8 +44,7 @@ const EditBudgetDialog = ({ category, currentAmount }: { category: string, curre
                     <Input id="amount" type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} />
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleSubmit} disabled={isSubmitting}>
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Button onClick={handleSubmit}>
                         Save Changes
                     </Button>
                 </DialogFooter>
@@ -64,26 +59,22 @@ const NewBudgetDialog = () => {
     const [amount, setAmount] = useState(0);
     const [open, setOpen] = useState(false);
     const { toast } = useToast();
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const availableCategories = categories.filter(c => c.name !== 'Income' && !budgets.find(b => b.category === c.name));
 
-    const handleSubmit = async () => {
+    const handleSubmit = () => {
         if (!category || amount <= 0) {
             toast({ title: 'Invalid Input', description: 'Please select a category and enter a valid amount.', variant: 'destructive' });
             return;
         }
-        setIsSubmitting(true);
         try {
-            await updateBudget({ category, amount });
+            updateBudget({ category, amount });
             toast({ title: 'Budget Created', description: `Budget for ${category} set to $${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.` });
             setCategory('');
             setAmount(0);
             setOpen(false);
         } catch(error) {
             toast({ title: 'Error', description: 'Failed to create budget.', variant: 'destructive' });
-        } finally {
-            setIsSubmitting(false);
         }
     };
 
@@ -114,8 +105,7 @@ const NewBudgetDialog = () => {
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleSubmit} disabled={isSubmitting}>
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Button onClick={handleSubmit}>
                         Create Budget
                     </Button>
                 </DialogFooter>

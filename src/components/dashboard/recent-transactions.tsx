@@ -14,9 +14,9 @@ export default function RecentTransactions() {
 
   const recentTransactions = transactions.slice(0, 5);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     try {
-      await deleteTransaction(id);
+      deleteTransaction(id);
       toast({
         title: "Success",
         description: "Transaction deleted successfully.",
