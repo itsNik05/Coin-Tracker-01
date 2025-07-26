@@ -5,82 +5,63 @@ import React, { createContext, useContext, useState, useMemo, useEffect } from '
 import { type Transaction, type Budget, type Category } from '@/lib/types';
 import { categories as defaultCategories } from '@/lib/data';
 import { categorizeTransaction as categorizeTransactionFlow } from '@/ai/flows/categorize-transaction';
-import { useAuth } from '@/hooks/use-auth';
-import { addTransactionToDb, getTransactions, deleteTransactionFromDb, updateTransactionInDb, getBudgets, updateBudgetInDb } from '@/lib/firestore';
 
 interface AppState {
   transactions: Transaction[];
   budgets: Budget[];
   categories: Category[];
-  loading: boolean;
-  addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => Promise<void>;
-  updateBudget: (budget: Omit<Budget, 'id'>) => Promise<void>;
+  addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
+  updateBudget: (budget: Omit<Budget, 'id'>) => void;
   getCategoryByName: (name: string) => Category | undefined;
   categorizeTransaction: (description: string) => Promise<string | null>;
-  deleteTransaction: (id: string) => Promise<void>;
-  updateTransaction: (transaction: Transaction) => Promise<void>;
+  deleteTransaction: (id: string) => void;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadData = async () => {
-      if (user) {
-        setLoading(true);
-        try {
-          const [userTransactions, userBudgets] = await Promise.all([
-            getTransactions(user.uid),
-            getBudgets(user.uid)
-          ]);
-          setTransactions(userTransactions);
-          setBudgets(userBudgets);
-        } catch (error) {
-          console.error("Failed to load user data:", error);
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        // Not logged in, clear data
-        setTransactions([]);
-        setBudgets([]);
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [user]);
+    const storedTransactions = sessionStorage.getItem('transactions');
+    if (storedTransactions) {
+      setTransactions(JSON.parse(storedTransactions).map((t: any) => ({...t, date: new Date(t.date)})));
+    }
+    const storedBudgets = sessionStorage.getItem('budgets');
+    if (storedBudgets) {
+      setBudgets(JSON.parse(storedBudgets));
+    }
+  }, []);
 
+  useEffect(() => {
+    sessionStorage.setItem('transactions', JSON.stringify(transactions));
+  }, [transactions]);
+
+  useEffect(() => {
+    sessionStorage.setItem('budgets', JSON.stringify(budgets));
+  }, [budgets]);
 
   const getCategoryByName = (name: string): Category | undefined => {
     return defaultCategories.find(c => c.name.toLowerCase() === name.toLowerCase());
   };
 
-  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'date'>) => {
-    if (!user) throw new Error("User not authenticated");
-    
-    const newTransactionData = {
+  const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
+    const newTransaction = {
       ...transaction,
+      id: `tx-${Date.now()}-${Math.random()}`,
       date: new Date(),
     };
-
-    const newTransaction = await addTransactionToDb(user.uid, newTransactionData);
-    setTransactions(prev => [newTransaction, ...prev].sort((a,b) => b.date.getTime() - a.date.getTime()));
+    setTransactions(prev => [newTransaction, ...prev]);
   };
   
-  const updateBudget = async (budget: Omit<Budget, 'id'>) => {
-    if (!user) throw new Error("User not authenticated");
-    const updatedBudget = await updateBudgetInDb(user.uid, budget);
+  const updateBudget = (budget: Omit<Budget, 'id'>) => {
     setBudgets(prev => {
-        const existing = prev.find(b => b.category === updatedBudget.category);
-        if (existing) {
-            return prev.map(b => b.category === updatedBudget.category ? { ...b, amount: updatedBudget.amount } : b);
-        }
-        return [...prev, updatedBudget];
+      const existing = prev.find(b => b.category === budget.category);
+      if (existing) {
+        return prev.map(b => b.category === budget.category ? { ...b, amount: budget.amount } : b);
+      }
+      return [...prev, { ...budget, id: `budget-${Date.now()}` }];
     });
   };
 
@@ -98,20 +79,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const deleteTransaction = async (id: string) => {
-    if (!user) throw new Error("User not authenticated");
-    await deleteTransactionFromDb(id);
+  const deleteTransaction = (id: string) => {
     setTransactions(prev => prev.filter(transaction => transaction.id !== id));
-  };
-
-  const updateTransaction = async (updatedTransaction: Transaction) => {
-    if (!user) throw new Error("User not authenticated");
-    await updateTransactionInDb(updatedTransaction);
-    setTransactions(prev => 
-      prev.map(transaction => 
-        transaction.id === updatedTransaction.id ? updatedTransaction : transaction
-      )
-    );
   };
 
 
@@ -119,14 +88,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     transactions,
     budgets,
     categories: defaultCategories,
-    loading,
     addTransaction,
     updateBudget,
     getCategoryByName,
     categorizeTransaction,
     deleteTransaction,
-    updateTransaction,
-  }), [transactions, budgets, loading, user]);
+  }), [transactions, budgets]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
