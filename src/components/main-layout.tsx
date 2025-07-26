@@ -35,12 +35,21 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
+  const getInitials = (name: string | null) => {
+    if (!name) return '';
+    const nameParts = name.split(' ');
+    if (nameParts.length > 1) {
+      return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
+    }
+    return name.charAt(0).toUpperCase();
+  }
+
   const userDisplay = (
     <div className="flex flex-col items-center gap-2 px-2.5 py-4 text-center">
       <Avatar className="h-20 w-20">
         <AvatarImage src={user?.photoURL || undefined} />
         <AvatarFallback>
-          {userName ? userName.charAt(0).toUpperCase() : <UserIcon className="h-10 w-10" />}
+          {userName ? getInitials(userName) : <UserIcon className="h-10 w-10" />}
         </AvatarFallback>
       </Avatar>
       {userName && <p className="text-lg font-semibold">{userName}</p>}
