@@ -28,31 +28,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
+      setLoading(true);
       if (user) {
-        setLoading(true);
-        try {
-          const userDocRef = doc(db, "users", user.uid);
-          const userDocSnap = await getDoc(userDocRef);
-          if (userDocSnap.exists()) {
-            const userData = userDocSnap.data();
-            setUserName(`${userData.firstName} ${userData.lastName || ''}`.trim());
-          } else if (user.displayName) {
-             setUserName(user.displayName);
-          }
-          else {
+        setUser(user);
+        // Prefer displayName if it exists (e.g., from Google Sign-In)
+        if (user.displayName) {
+          setUserName(user.displayName);
+        } else {
+          // Fallback to fetching from Firestore for email/password users
+          try {
+            const userDocRef = doc(db, "users", user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+              const userData = userDocSnap.data();
+              setUserName(`${userData.firstName} ${userData.lastName || ''}`.trim());
+            } else {
+              // If no doc, use email as a last resort
+              setUserName(user.email);
+            }
+          } catch (error) {
+            console.error("Failed to get document, using email as fallback:", error);
+            // If firestore fails (e.g. offline), use email
             setUserName(user.email);
           }
-        } catch (error) {
-          console.error("Failed to fetch user name, using fallback:", error);
-          setUserName(user.displayName || user.email);
-        } finally {
-          setLoading(false);
         }
       } else {
+        setUser(null);
         setUserName(null);
-        setLoading(false);
       }
+      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
