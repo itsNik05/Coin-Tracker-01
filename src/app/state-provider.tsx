@@ -79,10 +79,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addTransaction = async (transaction: Omit<Transaction, 'id' | 'date'>) => {
     if (!user) throw new Error("User not authenticated");
-    const newDocId = await addTransactionToDb(user.uid, transaction);
-    const newTransaction = { ...transaction, id: newDocId, date: new Date() };
+    
+    const newTransactionWithDate = {
+      ...transaction,
+      date: new Date(),
+    };
+
+    const newDocId = await addTransactionToDb(user.uid, newTransactionWithDate);
+    const finalTransaction = { ...newTransactionWithDate, id: newDocId };
+
     setTransactions(prev => 
-      [...prev, newTransaction].sort((a, b) => b.date.getTime() - a.date.getTime())
+      [...prev, finalTransaction].sort((a, b) => b.date.getTime() - a.date.getTime())
     );
   };
   
@@ -140,7 +147,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     categorizeTransaction,
     deleteTransaction,
     updateTransaction,
-  }), [transactions, budgets, authLoading, loading, addTransaction, updateBudget, getCategoryByName, categorizeTransaction, deleteTransaction, updateTransaction]);
+  }), [transactions, budgets, authLoading, loading]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

@@ -35,11 +35,10 @@ export const getTransactions = async (userId: string): Promise<Transaction[]> =>
     return transactions.sort((a, b) => b.date.getTime() - a.date.getTime());
 };
 
-export const addTransaction = async (userId: string, transaction: Omit<Transaction, 'id' | 'date'>) => {
+export const addTransaction = async (userId: string, transaction: Omit<Transaction, 'id'>) => {
     const docRef = await addDoc(collection(db, "transactions"), { 
         ...transaction,
         userId,
-        date: new Date()
     });
     return docRef.id;
 };
