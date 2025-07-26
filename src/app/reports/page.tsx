@@ -17,8 +17,13 @@ import { useAuth } from "@/hooks/use-auth";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from 'react';
+import { doc, getFirestore, getDoc } from 'firebase/firestore'; // Import Firestore functions
+import { app } from "@/lib/firebase"; // Import firebase app
 
-const ReportView = ({ transactions }: { transactions: Transaction[] }) => {
+const db = getFirestore(app); // Get Firestore instance
+
+const ReportView = ({ transactions, userName, reportPeriod }: { transactions: Transaction[], userName: string | null, reportPeriod: string }) => {
     const totalIncome = transactions
         .filter(t => t.type === 'income')
         .reduce((acc, t) => acc + t.amount, 0);
@@ -36,6 +41,9 @@ const ReportView = ({ transactions }: { transactions: Transaction[] }) => {
 
     return (
         <div className="space-y-4">
+            {userName && reportPeriod && (
+                <p className="text-lg font-semibold">Report for {userName} ({reportPeriod})</p>
+            )}
             <Card>
                 <CardHeader>
                     <CardTitle>Summary</CardTitle>
@@ -72,6 +80,26 @@ export default function ReportsPage() {
     const router = useRouter();
     const [date, setDate] = React.useState<DateRange | undefined>();
     const [reportTxs, setReportTxs] = React.useState<Transaction[] | null>(null);
+    const [userName, setUserName] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchUserName = async () => {
+            if (user) {
+                const userDocRef = doc(db, "users", user.uid);
+                const userDocSnap = await getDoc(userDocRef);
+                if (userDocSnap.exists()) {
+                    const userData = userDocSnap.data();
+                    setUserName(`${userData.firstName} ${userData.lastName || ''}`.trim());
+                } else {
+                    setUserName(user.email); // Use email if user data not in Firestore
+                }
+            } else {
+                setUserName(null);
+            }
+        };
+
+        fetchUserName();
+    }, [user]); // Refetch name if user changes
 
     const generatePDF = (txs: Transaction[], title: string) => {
         const doc = new jsPDF();
@@ -82,10 +110,17 @@ export default function ReportsPage() {
 
         doc.setFontSize(20);
         doc.text(title, 14, 22);
+        // Add user name and report period to PDF
+        if (userName && date?.from && date?.to) {
+            doc.setFontSize(12);
+            doc.text(`For: ${userName}`, 14, 28);
+            doc.text(`Period: ${format(date.from, "MMM d, yyyy")} - ${format(date.to, "MMM d, yyyy")}`, 14, 34);
+        }
+
         doc.setFontSize(12);
-        doc.text(`Total Income: $${totalIncome.toFixed(2)}`, 14, 32);
-        doc.text(`Total Expenses: $${totalExpense.toFixed(2)}`, 14, 38);
-        doc.text(`Net Flow: $${netFlow.toFixed(2)}`, 14, 44);
+        doc.text(`Total Income: $${totalIncome.toFixed(2)}`, 14, userName && date?.from && date?.to ? 44 : 32);
+        doc.text(`Total Expenses: $${totalExpense.toFixed(2)}`, 14, userName && date?.from && date?.to ? 50 : 38);
+        doc.text(`Net Flow: $${netFlow.toFixed(2)}`, 14, userName && date?.from && date?.to ? 56 : 44);
 
         const tableColumn = ["Date", "Description", "Category", "Type", "Amount"];
         const tableRows: (string | number)[][] = [];
@@ -102,7 +137,7 @@ export default function ReportsPage() {
         });
 
         (doc as any).autoTable({
-            startY: 50,
+            startY: userName && date?.from && date?.to ? 62 : 50,
             head: [tableColumn],
             body: tableRows,
         });
@@ -149,6 +184,8 @@ export default function ReportsPage() {
     const handleShare = () => {
         toast({ title: 'Link Copied!', description: 'A shareable link to your report has been copied to your clipboard.' });
     };
+
+    const reportPeriodText = date?.from && date?.to ? `${format(date.from, "MMM d, yyyy")} - ${format(date.to, "MMM d, yyyy")}` : '';
 
     return (
         <MainLayout>
@@ -216,7 +253,7 @@ export default function ReportsPage() {
                             <div>
                                 <CardTitle>Your Report</CardTitle>
                                 <CardDescription>
-                                    {date?.from && date.to && `${format(date.from, "MMM d, yyyy")} - ${format(date.to, "MMM d, yyyy")}`}
+                                   {userName && reportPeriodText ? `Report for ${userName} (${reportPeriodText})` : reportPeriodText}
                                 </CardDescription>
                             </div>
                             <div className="flex gap-2">
@@ -226,7 +263,7 @@ export default function ReportsPage() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            {reportTxs.length > 0 ? <ReportView transactions={reportTxs} /> : <p className="text-muted-foreground">No transactions in this period.</p>}
+                            {reportTxs.length > 0 ? <ReportView transactions={reportTxs} userName={userName} reportPeriod={reportPeriodText} /> : <p className="text-muted-foreground">No transactions in this period.</p>}
                         </CardContent>
                     </Card>
                 )}

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Home, Wallet, PieChart, FileText, PanelLeft, Bot, LogOut, LogIn, ChevronDown } from 'lucide-react';
@@ -9,6 +9,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/use-auth';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { doc, getFirestore, getDoc } from 'firebase/firestore';
+import { app } from "@/lib/firebase";
+
+const db = getFirestore(app);
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: Home },
@@ -20,6 +24,26 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut, loading } = useAuth();
+  const [userName, setUserName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserName = async () => {
+      if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          setUserName(`${userData.firstName} ${userData.lastName || ''}`.trim());
+        } else {
+          setUserName(user.email); // Fallback to email if name not in Firestore
+        }
+      } else {
+        setUserName(null);
+      }
+    };
+
+    fetchUserName();
+  }, [user]); // Refetch name if user changes
 
   if (loading) {
     return (
@@ -61,6 +85,17 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         </TooltipProvider>
       </nav>
       <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
+        {user ? (
+           <TooltipProvider>
+              <Tooltip>
+                  <TooltipTrigger asChild>
+                       <span className="text-sm text-muted-foreground">{userName || 'Loading...'}</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Logged in as</TooltipContent>
+              </Tooltip>
+           </TooltipProvider>
+        ) : null}
+
         <TooltipProvider>
             {user ? (
                 <Tooltip>
@@ -141,6 +176,12 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           <div className="font-headline text-xl font-semibold">
             {navItems.find(item => item.href === pathname)?.label || 'Dashboard'}
           </div>
+           {/* Display user name here */}
+           {user && userName && (
+                <div className="ml-auto text-sm text-muted-foreground">
+                    Logged in as: {userName}
+                </div>
+            )}
         </header>
         <main className="flex-1 p-4 sm:px-6 sm:py-0">{children}</main>
       </div>

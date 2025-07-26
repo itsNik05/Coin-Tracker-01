@@ -1,14 +1,15 @@
 'use client';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth, signInWithGoogle, signInWithMicrosoft, signOut as firebaseSignOut } from '@/lib/auth';
+import { auth, signInWithGoogle, signOut as firebaseSignOut, signInWithEmail, signUpWithEmail } from '@/lib/auth';
 import { usePathname, useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
-  signInWithMicrosoft: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -33,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // No longer force redirect to login
   };
   
-  const value = { user, loading, signInWithGoogle, signInWithMicrosoft, signOut };
+  const value = { user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
