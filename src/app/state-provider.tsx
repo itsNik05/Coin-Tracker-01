@@ -13,6 +13,8 @@ interface AppState {
   updateBudget: (budget: Budget) => void;
   getCategoryByName: (name: string) => Category | undefined;
   categorizeTransaction: (description: string) => Promise<string | null>;
+  deleteTransaction: (id: string) => void; // Add deleteTransaction to the interface
+  updateTransaction: (transaction: Transaction) => void; // Add updateTransaction to the interface
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -56,6 +58,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Add deleteTransaction function
+  const deleteTransaction = (id: string) => {
+    setTransactions(prev => prev.filter(transaction => transaction.id !== id));
+  };
+
+  // Add updateTransaction function
+  const updateTransaction = (updatedTransaction: Transaction) => {
+    setTransactions(prev => 
+      prev.map(transaction => 
+        transaction.id === updatedTransaction.id ? updatedTransaction : transaction
+      )
+    );
+  };
+
+
   const value = useMemo(() => ({
     transactions,
     budgets,
@@ -64,6 +81,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     updateBudget,
     getCategoryByName,
     categorizeTransaction,
+    deleteTransaction, // Include deleteTransaction in the value object
+    updateTransaction, // Include updateTransaction in the value object
   }), [transactions, budgets]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

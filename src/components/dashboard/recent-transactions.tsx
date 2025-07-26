@@ -3,22 +3,14 @@ import { useAppState } from "@/app/state-provider";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button"; // Import Button
-import { Edit, Trash2 } from "lucide-react"; // Import icons
+import { Trash2 } from "lucide-react"; // Import icons
 
 export default function RecentTransactions() {
-  const { transactions, getCategoryByName } = useAppState();
+  const { transactions, getCategoryByName, deleteTransaction } = useAppState();
 
   const recentTransactions = transactions.slice(0, 5);
-
-  // Placeholder functions for now
   const handleDelete = (id: string) => {
-    console.log("Delete transaction with ID:", id);
-    // TODO: Implement actual delete logic
-  };
-
-  const handleEdit = (id: string) => {
-    console.log("Edit transaction with ID:", id);
-    // TODO: Implement actual edit logic
+    deleteTransaction(id);
   };
 
   return (
@@ -49,9 +41,6 @@ export default function RecentTransactions() {
               </TableCell>
               <TableCell> {/* Add Actions cell */}
                 <div className="flex gap-2">
-                  <Button variant="outline" size="icon" onClick={() => handleEdit(t.id)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
                   <Button variant="destructive" size="icon" onClick={() => handleDelete(t.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
