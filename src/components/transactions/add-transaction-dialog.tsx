@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ export default function AddTransactionDialog() {
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [category, setCategory] = useState('');
   const [isCategorizing, setIsCategorizing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const expenseCategories = categories.filter(c => c.name !== 'Income');
   const incomeCategory = categories.find(c => c.name === 'Income');
@@ -69,7 +71,7 @@ export default function AddTransactionDialog() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!description || !amount || !category) {
         toast({
@@ -79,22 +81,33 @@ export default function AddTransactionDialog() {
         });
         return;
     }
-    addTransaction({
-      description,
-      amount: parseFloat(amount),
-      type,
-      category,
-    });
-    toast({
-      title: "Transaction Added",
-      description: `${description} for $${amount} was added.`,
-    });
-    // Reset form
-    setDescription('');
-    setAmount('');
-    setType('expense');
-    setCategory('');
-    setOpen(false);
+    setIsSubmitting(true);
+    try {
+      await addTransaction({
+        description,
+        amount: parseFloat(amount),
+        type,
+        category,
+      });
+      toast({
+        title: "Transaction Added",
+        description: `${description} for $${amount} was added.`,
+      });
+      // Reset form
+      setDescription('');
+      setAmount('');
+      setType('expense');
+      setCategory('');
+      setOpen(false);
+    } catch (error) {
+       toast({
+        title: "Error",
+        description: "Failed to add transaction. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -157,9 +170,12 @@ export default function AddTransactionDialog() {
           </div>
           <DialogFooter>
             <DialogClose asChild>
-                <Button type="button" variant="secondary">Cancel</Button>
+                <Button type="button" variant="secondary" disabled={isSubmitting}>Cancel</Button>
             </DialogClose>
-            <Button type="submit">Add Transaction</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Add Transaction
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

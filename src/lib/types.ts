@@ -1,5 +1,7 @@
+
 export interface Transaction {
   id: string;
+  userId?: string; // Add userId to associate with a user
   date: Date;
   description: string;
   amount: number;
@@ -15,6 +17,7 @@ export interface Category {
 
 export interface Budget {
   id: string;
+  userId?: string; // Add userId to associate with a user
   category: string;
   amount: number;
 }

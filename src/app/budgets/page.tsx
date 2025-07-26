@@ -1,3 +1,4 @@
+
 'use client';
 import { MainLayout } from "@/components/main-layout";
 import { useAppState } from "../state-provider";
@@ -10,17 +11,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const EditBudgetDialog = ({ category, currentAmount }: { category: string, currentAmount: number }) => {
     const { updateBudget } = useAppState();
     const [amount, setAmount] = useState(currentAmount);
     const [open, setOpen] = useState(false);
     const { toast } = useToast();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = () => {
-        updateBudget({ id: '', category, amount });
-        toast({ title: 'Budget Updated', description: `Budget for ${category} set to $${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.` });
-        setOpen(false);
+    const handleSubmit = async () => {
+        setIsSubmitting(true);
+        try {
+            await updateBudget({ category, amount });
+            toast({ title: 'Budget Updated', description: `Budget for ${category} set to $${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.` });
+            setOpen(false);
+        } catch (error) {
+             toast({ title: 'Error', description: 'Failed to update budget.', variant: 'destructive' });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -37,7 +48,10 @@ const EditBudgetDialog = ({ category, currentAmount }: { category: string, curre
                     <Input id="amount" type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} />
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleSubmit}>Save Changes</Button>
+                    <Button onClick={handleSubmit} disabled={isSubmitting}>
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Changes
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -50,19 +64,27 @@ const NewBudgetDialog = () => {
     const [amount, setAmount] = useState(0);
     const [open, setOpen] = useState(false);
     const { toast } = useToast();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const availableCategories = categories.filter(c => c.name !== 'Income' && !budgets.find(b => b.category === c.name));
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!category || amount <= 0) {
             toast({ title: 'Invalid Input', description: 'Please select a category and enter a valid amount.', variant: 'destructive' });
             return;
         }
-        updateBudget({ id: '', category, amount });
-        toast({ title: 'Budget Created', description: `Budget for ${category} set to $${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.` });
-        setCategory('');
-        setAmount(0);
-        setOpen(false);
+        setIsSubmitting(true);
+        try {
+            await updateBudget({ category, amount });
+            toast({ title: 'Budget Created', description: `Budget for ${category} set to $${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.` });
+            setCategory('');
+            setAmount(0);
+            setOpen(false);
+        } catch(error) {
+            toast({ title: 'Error', description: 'Failed to create budget.', variant: 'destructive' });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -92,7 +114,10 @@ const NewBudgetDialog = () => {
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleSubmit}>Create Budget</Button>
+                    <Button onClick={handleSubmit} disabled={isSubmitting}>
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Create Budget
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -101,7 +126,7 @@ const NewBudgetDialog = () => {
 
 
 export default function BudgetsPage() {
-    const { transactions, budgets, categories } = useAppState();
+    const { transactions, budgets, categories, loading } = useAppState();
 
     const expensesByCategory = transactions
         .filter(t => t.type === 'expense')
@@ -109,6 +134,41 @@ export default function BudgetsPage() {
             acc[t.category] = (acc[t.category] || 0) + t.amount;
             return acc;
         }, {} as Record<string, number>);
+
+    if (loading) {
+        return (
+            <MainLayout>
+                 <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                        <Skeleton className="h-10 w-48" />
+                        <Skeleton className="h-10 w-32" />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {[...Array(3)].map((_, i) => (
+                           <Card key={i}>
+                                <CardHeader>
+                                     <div className="flex justify-between items-start">
+                                        <div>
+                                            <Skeleton className="h-6 w-32 mb-2"/>
+                                            <Skeleton className="h-4 w-24"/>
+                                        </div>
+                                         <Skeleton className="h-8 w-16" />
+                                     </div>
+                                </CardHeader>
+                                <CardContent className="space-y-2">
+                                    <Skeleton className="h-4 w-full" />
+                                     <div className="flex justify-between text-sm">
+                                        <Skeleton className="h-4 w-28" />
+                                        <Skeleton className="h-4 w-28" />
+                                    </div>
+                                </CardContent>
+                           </Card>
+                        ))}
+                    </div>
+                </div>
+            </MainLayout>
+        )
+    }
 
     return (
         <MainLayout>

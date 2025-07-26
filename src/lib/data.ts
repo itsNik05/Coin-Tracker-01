@@ -1,4 +1,5 @@
-import { type Transaction, type Category, type Budget } from '@/lib/types';
+
+import { type Category } from '@/lib/types';
 import { Home, Utensils, Car, ShoppingBag, Shirt, HeartPulse, Film, BookOpen, Gift, PawPrint, Landmark } from 'lucide-react';
 
 export const categories: Category[] = [
@@ -15,7 +16,3 @@ export const categories: Category[] = [
   { id: 'cat-11', name: 'Other', icon: Gift },
   { id: 'cat-12', name: 'Income', icon: Landmark },
 ];
-
-export const initialTransactions: Transaction[] = [];
-
-export const initialBudgets: Budget[] = [];
