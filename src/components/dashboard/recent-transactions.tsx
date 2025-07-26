@@ -2,8 +2,8 @@
 import { useAppState } from "@/app/state-provider";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button"; // Import Button
-import { Trash2 } from "lucide-react"; // Import icons
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 
 export default function RecentTransactions() {
   const { transactions, getCategoryByName, deleteTransaction } = useAppState();
@@ -20,7 +20,7 @@ export default function RecentTransactions() {
           <TableHead>Description</TableHead>
           <TableHead>Category</TableHead>
           <TableHead className="text-right">Amount</TableHead>
-          <TableHead>Actions</TableHead> {/* Add Actions header */}
+          <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -39,7 +39,7 @@ export default function RecentTransactions() {
               <TableCell className={`text-right font-semibold ${t.type === 'income' ? 'text-accent-foreground' : 'text-destructive'}`}>
                 {t.type === 'income' ? '+' : '-'}${t.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </TableCell>
-              <TableCell> {/* Add Actions cell */}
+              <TableCell>
                 <div className="flex gap-2">
                   <Button variant="destructive" size="icon" onClick={() => handleDelete(t.id)}>
                     <Trash2 className="h-4 w-4" />
