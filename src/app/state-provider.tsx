@@ -20,8 +20,8 @@ interface AppState {
 const AppContext = createContext<AppState | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions); // Changed initialTransactions to []
-  const [budgets, setBudgets] = useState<Budget[]>(initialBudgets); // Changed initialBudgets to []
+  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+  const [budgets, setBudgets] = useState<Budget[]>(initialBudgets);
 
   const getCategoryByName = (name: string): Category | undefined => {
     return defaultCategories.find(c => c.name.toLowerCase() === name.toLowerCase());
