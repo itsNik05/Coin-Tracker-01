@@ -124,23 +124,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   </Link>
                 ))}
 
-                {/* Added Collapsible Menu for Statements */}
-                <Collapsible>
-                  <CollapsibleTrigger className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
-                    <FileText className="h-5 w-5" />
-                    Statements
-                    <ChevronDown className="ml-auto h-4 w-4" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="grid gap-2 pl-8">
-                    <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
-                      Weekly Statement
-                    </Link>
-                    <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
-                      Monthly Statement
-                    </Link>
-                  </CollapsibleContent>
-                </Collapsible>
-
                 {user ? (
                     <button onClick={signOut} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
                         <LogOut className="h-5 w-5" />
