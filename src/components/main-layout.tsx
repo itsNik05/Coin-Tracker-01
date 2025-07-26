@@ -35,7 +35,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           {userName ? userName.charAt(0).toUpperCase() : <UserIcon />}
         </AvatarFallback>
       </Avatar>
-      <span className="font-bold text-lg">{userName || 'Welcome'}</span>
+      
     </div>
   );
 
