@@ -169,47 +169,49 @@ export default function ReportsPage() {
                         <CardTitle>Generate a Report</CardTitle>
                         <CardDescription>Select a date range to generate a spending report, or download a quick report.</CardDescription>
                     </CardHeader>
-                    <CardContent className="flex flex-col md:flex-row items-center gap-4">
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    id="date"
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-[300px] justify-start text-left font-normal",
-                                        !date && "text-muted-foreground"
-                                    )}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {date?.from ? (
-                                        date.to ? (
-                                            <>{format(date.from, "LLL dd, y")} - {format(date.to, "LLL dd, y")}</>
+                    <CardContent className="flex flex-col gap-4">
+                        <div className="flex flex-col md:flex-row items-center gap-4">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        id="date"
+                                        variant={"outline"}
+                                        className={cn(
+                                            "w-full md:w-[300px] justify-start text-left font-normal",
+                                            !date && "text-muted-foreground"
+                                        )}
+                                    >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {date?.from ? (
+                                            date.to ? (
+                                                <>{format(date.from, "LLL dd, y")} - {format(date.to, "LLL dd, y")}</>
+                                            ) : (
+                                                format(date.from, "LLL dd, y")
+                                            )
                                         ) : (
-                                            format(date.from, "LLL dd, y")
-                                        )
-                                    ) : (
-                                        <span>Pick a date range</span>
-                                    )}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    initialFocus
-                                    mode="range"
-                                    defaultMonth={date?.from}
-                                    selected={date}
-                                    onSelect={setDate}
-                                    numberOfMonths={2}
-                                />
-                            </PopoverContent>
-                        </Popover>
-                        <Button onClick={generateReport}>Generate Report</Button>
-                        <div className="flex gap-2">
-                             <Button onClick={() => handleDownload('weekly')} variant="outline">
+                                            <span>Pick a date range</span>
+                                        )}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        initialFocus
+                                        mode="range"
+                                        defaultMonth={date?.from}
+                                        selected={date}
+                                        onSelect={setDate}
+                                        numberOfMonths={2}
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                            <Button onClick={generateReport} className="w-full md:w-auto">Generate Report</Button>
+                        </div>
+                        <div className="flex flex-col md:flex-row gap-2">
+                             <Button onClick={() => handleDownload('weekly')} variant="outline" className="w-full md:w-auto">
                                 <Download className="mr-2 h-4 w-4" />
                                 Weekly PDF
                             </Button>
-                            <Button onClick={() => handleDownload('monthly')} variant="outline">
+                            <Button onClick={() => handleDownload('monthly')} variant="outline" className="w-full md:w-auto">
                                 <Download className="mr-2 h-4 w-4" />
                                 Monthly PDF
                             </Button>
