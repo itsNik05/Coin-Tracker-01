@@ -28,25 +28,20 @@ export default function RecentTransactions() {
           const category = getCategoryByName(t.category);
           const Icon = category?.icon;
           return (
-            <TableRow key={t.id}>
-              <TableCell className="font-medium">{t.description}</TableCell>
-              <TableCell>
+            <TableRow key={t.id}><TableCell className="font-medium">{t.description}</TableCell><TableCell>
                 <Badge variant="outline" className="flex items-center gap-2 w-fit">
                     {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
                     {t.category}
                 </Badge>
-              </TableCell>
-              <TableCell className={`text-right font-semibold ${t.type === 'income' ? 'text-accent-foreground' : 'text-destructive'}`}>
+              </TableCell><TableCell className={`text-right font-semibold ${t.type === 'income' ? 'text-accent-foreground' : 'text-destructive'}`}>
                 {t.type === 'income' ? '+' : '-'}${t.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </TableCell>
-              <TableCell> {/* Add Actions cell */}
+              </TableCell><TableCell> {/* Add Actions cell */}
                 <div className="flex gap-2">
                   <Button variant="destructive" size="icon" onClick={() => handleDelete(t.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-              </TableCell>
-            </TableRow>
+              </TableCell></TableRow>
           );
         })}
       </TableBody>

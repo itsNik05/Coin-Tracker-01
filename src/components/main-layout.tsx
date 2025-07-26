@@ -1,17 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Home, Wallet, FileText, PanelLeft, Bot, LogOut, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/use-auth';
-import { doc, getFirestore, getDoc } from 'firebase/firestore';
-import { app } from "@/lib/firebase";
-
-const db = getFirestore(app);
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: Home },
@@ -21,33 +16,7 @@ const navItems = [
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { user, signOut, loading } = useAuth();
-  const [userName, setUserName] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchUserName = async () => {
-      if (user) {
-        try {
-          const userDocRef = doc(db, "users", user.uid);
-          const userDocSnap = await getDoc(userDocRef);
-          if (userDocSnap.exists()) {
-            const userData = userDocSnap.data();
-            setUserName(`${userData.firstName} ${userData.lastName || ''}`.trim());
-          } else {
-            setUserName(user.displayName || user.email);
-          }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-          setUserName(user.displayName || user.email); // Fallback on error
-        }
-      } else {
-        setUserName(null);
-      }
-    };
-
-    fetchUserName();
-  }, [user]);
+  const { user, userName, signOut, loading } = useAuth();
 
   if (loading) {
     return (

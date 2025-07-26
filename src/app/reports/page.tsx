@@ -17,11 +17,6 @@ import { useAuth } from "@/hooks/use-auth";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from 'react';
-import { doc, getFirestore, getDoc } from 'firebase/firestore'; 
-import { app } from "@/lib/firebase"; 
-
-const db = getFirestore(app); 
 
 const ReportView = ({ transactions }: { transactions: Transaction[] }) => {
     const totalIncome = transactions
@@ -73,34 +68,10 @@ const ReportView = ({ transactions }: { transactions: Transaction[] }) => {
 export default function ReportsPage() {
     const { transactions } = useAppState();
     const { toast } = useToast();
-    const { user } = useAuth();
+    const { user, userName } = useAuth();
     const router = useRouter();
     const [date, setDate] = React.useState<DateRange | undefined>();
     const [reportTxs, setReportTxs] = React.useState<Transaction[] | null>(null);
-    const [userName, setUserName] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchUserName = async () => {
-            if (user) {
-                try {
-                    const userDocRef = doc(db, "users", user.uid);
-                    const userDocSnap = await getDoc(userDocRef);
-                    if (userDocSnap.exists()) {
-                        const userData = userDocSnap.data();
-                        setUserName(`${userData.firstName} ${userData.lastName || ''}`.trim());
-                    } else {
-                        setUserName(user.displayName || user.email);
-                    }
-                } catch (error) {
-                    setUserName(user.displayName || user.email); // Fallback on error
-                }
-            } else {
-                setUserName(null);
-            }
-        };
-
-        fetchUserName();
-    }, [user]);
 
     const generatePDF = (txs: Transaction[], title: string, period: string) => {
         const doc = new jsPDF();
