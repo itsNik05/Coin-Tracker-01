@@ -29,13 +29,13 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
   const userDisplay = (
     <div className="flex flex-col items-center gap-2 px-2.5 py-4 text-center">
-      <Avatar>
+      <Avatar className="h-20 w-20">
         <AvatarImage src={user?.photoURL || undefined} />
         <AvatarFallback>
-          {userName ? userName.charAt(0).toUpperCase() : <UserIcon />}
+          {userName ? userName.charAt(0).toUpperCase() : <UserIcon className="h-10 w-10" />}
         </AvatarFallback>
       </Avatar>
-      
+      {userName && <p className="text-lg font-semibold">{userName}</p>}
     </div>
   );
 
