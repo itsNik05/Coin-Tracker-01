@@ -46,10 +46,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
   const userDisplay = (
     <div className="flex flex-col items-center gap-2 px-2.5 py-4 text-center">
-      <Avatar className="h-20 w-20">
+      <Avatar className="h-16 w-16 text-xl">
         <AvatarImage src={user?.photoURL || undefined} />
         <AvatarFallback>
-          {userName ? getInitials(userName) : <UserIcon className="h-10 w-10" />}
+          {userName ? getInitials(userName) : <UserIcon className="h-8 w-8" />}
         </AvatarFallback>
       </Avatar>
       {userName && <p className="text-lg font-semibold">{userName}</p>}
@@ -91,7 +91,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <aside className="fixed inset-y-0 left-0 z-10 hidden w-60 flex-col border-r bg-background p-4 sm:flex">
         <AppLogo />
-        {user ? userDisplay : <div className="h-[124px]" />}
+        {user ? userDisplay : <div className="h-[108px]" />}
         {navContent}
         <div className="flex-grow" />
         {authSection}
@@ -107,7 +107,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             </SheetTrigger>
             <SheetContent side="left" className="sm:max-w-xs flex flex-col p-4">
               <AppLogo />
-              {user ? userDisplay : <div className="h-[124px]" />}
+              {user ? userDisplay : <div className="h-[108px]" />}
               {navContent}
               <div className="flex-grow" />
               {authSection}
