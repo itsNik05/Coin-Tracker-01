@@ -4,6 +4,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, signInWithGoogle, signOut as firebaseSignOut, signInWithEmail, signUpWithEmail } from '@/lib/auth';
 import { doc, getFirestore, getDoc } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
 
 const db = getFirestore(app);
 
@@ -23,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -35,8 +37,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
             setUserName(`${userData.firstName} ${userData.lastName || ''}`.trim());
-          } else {
-            setUserName(user.displayName || user.email);
+          } else if (user.displayName) {
+             setUserName(user.displayName);
+          }
+          else {
+            setUserName(user.email);
           }
         } catch (error) {
           console.error("Failed to fetch user name, using fallback:", error);
@@ -54,6 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await firebaseSignOut();
+    router.push('/login');
   };
   
   const value = { user, userName, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut };

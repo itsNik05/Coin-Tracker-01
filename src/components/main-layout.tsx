@@ -3,10 +3,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Wallet, FileText, PanelLeft, Bot, LogOut, LogIn } from 'lucide-react';
+import { Home, Wallet, FileText, PanelLeft, Bot, LogOut, LogIn, User as UserIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/use-auth';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: Home },
@@ -18,7 +19,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, userName, signOut, loading } = useAuth();
 
-  if (loading) {
+  if (loading && !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-2xl font-semibold">Loading...</div>
@@ -27,7 +28,13 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   }
 
   const userDisplay = (
-    <div className="px-2.5 py-4 text-center">
+    <div className="flex flex-col items-center gap-2 px-2.5 py-4 text-center">
+      <Avatar>
+        <AvatarImage src={user?.photoURL || undefined} />
+        <AvatarFallback>
+          {userName ? userName.charAt(0).toUpperCase() : <UserIcon />}
+        </AvatarFallback>
+      </Avatar>
       <span className="font-bold text-lg">{userName || 'Welcome'}</span>
     </div>
   );
@@ -73,7 +80,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <aside className="fixed inset-y-0 left-0 z-10 hidden w-60 flex-col border-r bg-background p-4 sm:flex">
-        {user && userDisplay}
+        {user ? userDisplay : <div className="h-[124px]" />}
         {navContent}
         <div className="flex-grow" />
         {authSection}
@@ -88,7 +95,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="sm:max-w-xs flex flex-col p-4">
-              {user && userDisplay}
+              {user ? userDisplay : <div className="h-[124px]" />}
               {navContent}
               <div className="flex-grow" />
               {authSection}
