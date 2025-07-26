@@ -18,7 +18,7 @@ const navItems = [
 const AppLogo = () => (
     <Link href="/" className="group flex items-center gap-2 px-2.5 mb-4 text-xl font-semibold text-foreground">
         <Package className="h-6 w-6 text-primary transition-transform group-hover:scale-110" />
-        <span>BudgetFlow</span>
+        <span>Coin Tracker</span>
     </Link>
 );
 

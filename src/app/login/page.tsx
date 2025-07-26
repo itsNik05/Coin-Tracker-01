@@ -46,7 +46,7 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-background">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-headline">Welcome to BudgetFlow</CardTitle>
+          <CardTitle className="text-2xl font-headline">Welcome to Coin Tracker</CardTitle>
           <CardDescription>{isSignUp ? 'Sign up to create an account' : 'Sign in to manage your finances'}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">

@@ -5,7 +5,7 @@ import { AuthProvider } from '@/hooks/use-auth';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'BudgetFlow',
+  title: 'Coin Tracker',
   description: 'Track your income and expenses with ease.',
 };
 
