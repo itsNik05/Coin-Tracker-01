@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Wallet, FileText, PanelLeft, LogOut, LogIn, User as UserIcon } from 'lucide-react';
+import { Home, Wallet, FileText, PanelLeft, LogOut, LogIn, User as UserIcon, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/use-auth';
@@ -14,6 +14,14 @@ const navItems = [
   { href: '/budgets', label: 'Budgets', icon: Wallet },
   { href: '/reports', label: 'Reports', icon: FileText },
 ];
+
+const AppLogo = () => (
+    <Link href="/" className="group flex items-center gap-2 px-2.5 mb-4 text-xl font-semibold text-foreground">
+        <Package className="h-6 w-6 text-primary transition-transform group-hover:scale-110" />
+        <span>BudgetFlow</span>
+    </Link>
+);
+
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -73,6 +81,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <aside className="fixed inset-y-0 left-0 z-10 hidden w-60 flex-col border-r bg-background p-4 sm:flex">
+        <AppLogo />
         {user ? userDisplay : <div className="h-[124px]" />}
         {navContent}
         <div className="flex-grow" />
@@ -88,6 +97,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="sm:max-w-xs flex flex-col p-4">
+              <AppLogo />
               {user ? userDisplay : <div className="h-[124px]" />}
               {navContent}
               <div className="flex-grow" />
